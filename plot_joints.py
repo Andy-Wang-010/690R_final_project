@@ -1,21 +1,35 @@
 import numpy as np
-import matplotlib.pyplot as plt 
-import matplotlib
-
-a = dict(np.load('./amass/support_data/github_data/amass_sample.npz'))
-a = a['marker_data'][0]
-
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d import Axes3D
-def scatter3d(x,y,z, cs, colorsMap='jet'):
+
+# Load data
+data = np.load('./amass-master/support_data/github_data/amass_sample.npz', allow_pickle=True)
+a = data['marker_data'][0]
+data_trans = data['trans']
+labels = data['marker_labels']
+normalized = a-data_trans
+
+def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     cm = plt.get_cmap(colorsMap)
-    cNorm = matplotlib.colors.Normalize(vmin=min(cs), vmax=max(cs))
+    cNorm = mcolors.Normalize(vmin=min(cs), vmax=max(cs))
     scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+    
     fig = plt.figure()
-    ax = Axes3D(fig)
-    ax.scatter(x, y, z, c=scalarMap.to_rgba(cs))
-    scalarMap.set_array(cs)
-    # fig.colorbar(scalarMap)
+    ax = fig.add_subplot(111, projection='3d')
+    scatter = ax.scatter(x, y, z, c=scalarMap.to_rgba(cs))
+    
+    # Annotate each point in 3D space with its label
+    if labels is not None:
+        for i, txt in enumerate(labels):
+            ax.text(x[i], y[i], z[i], txt, size=5)
+
+    # Create a colorbar
+    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    fig.colorbar(scalarMap, cax=cbar_ax, shrink=0.5, aspect=5)
+
     plt.show()
 
-scatter3d(a[:,0],a[:,1],a[:,2],np.arange(len(a)))
+# Call the function with marker labels
+scatter3d(normalized[:,0], normalized[:,1], normalized[:,2], np.arange(len(normalized)), labels=labels)
