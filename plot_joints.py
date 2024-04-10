@@ -3,13 +3,15 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d import Axes3D
+import os
 
 # Load data
-data = np.load('./amass-master/support_data/github_data/amass_sample.npz', allow_pickle=True)
-a = data['marker_data'][0]
-data_trans = data['trans']
-labels = data['marker_labels']
-normalized = a-data_trans
+path1 = './amass-master/support_data/github_data/amass_sample.npz'
+path2 = './amass-master/support_data/github_data/A1_Stand_poses.npz'
+data = np.load(path2 , allow_pickle=True)[0]
+print(list(np.load(path1, allow_pickle=True).keys()))
+print(list(data.keys()))
+print(data['poses'].shape)
 
 def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     cm = plt.get_cmap(colorsMap)
@@ -32,4 +34,4 @@ def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     plt.show()
 
 # Call the function with marker labels
-scatter3d(normalized[:,0], normalized[:,1], normalized[:,2], np.arange(len(normalized)), labels=labels)
+scatter3d(data[:,0], data[:,1], data[:,2], np.arange(len(data)), labels=labels)
