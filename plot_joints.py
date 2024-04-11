@@ -8,6 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 data = np.load('./amass-master/support_data/github_data/amass_sample.npz', allow_pickle=True)
 a = data['marker_data'][0]
 labels = data['marker_labels']
+print(labels)
 
 def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     cm = plt.get_cmap(colorsMap)
