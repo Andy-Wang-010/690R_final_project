@@ -4,6 +4,7 @@ import matplotlib.colors as mcolors
 import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d import Axes3D
 
+
 data = np.load('./amass-master/support_data/github_data/amass_sample.npz', allow_pickle=True)
 marker_data = data['marker_data'][0]
 labels = data['marker_labels']
