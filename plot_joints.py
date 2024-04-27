@@ -5,10 +5,6 @@ import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d import Axes3D
 
 
-data = np.load('./amass-master/support_data/github_data/amass_sample.npz', allow_pickle=True)
-marker_data = data['marker_data'][0]
-labels = data['marker_labels']
-print(labels)
 
 def skeleton_plot(markerData):
     # Unpack the list of marker data into x, y, z coordinates
@@ -53,7 +49,13 @@ def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     fig.colorbar(scalarMap, cax=cbar_ax, shrink=0.5, aspect=5)
     
     plt.show()
+if __name__ == '__main__':
+    
+    data = np.load('./amass-master/support_data/github_data/amass_sample.npz', allow_pickle=True)
+    marker_data = data['marker_data'][0]
+    labels = data['marker_labels']
+    print(labels)
 
-scatter3d(marker_data[:,0], marker_data[:,1], marker_data[:,2], np.arange(len(marker_data)), labels=labels)
+    scatter3d(marker_data[:,0], marker_data[:,1], marker_data[:,2], np.arange(len(marker_data)), labels=labels)
 
-skeleton_plot(marker_data)
+    skeleton_plot(marker_data)
