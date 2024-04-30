@@ -4,6 +4,7 @@ import matplotlib.colors as mcolors
 import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d import Axes3D
 
+idx = 0
 
 
 def skeleton_plot(markerData):
@@ -25,6 +26,7 @@ def skeleton_plot(markerData):
     plt.show()
 
 def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
+    global idx
     cm = plt.get_cmap(colorsMap)
     cNorm = mcolors.Normalize(vmin=min(cs), vmax=max(cs))
     scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
@@ -47,6 +49,8 @@ def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     
     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
     fig.colorbar(scalarMap, cax=cbar_ax, shrink=0.5, aspect=5)
+    fig.savefig(f'scatter{idx}.png')
+    idx += 1
     
     plt.show()
 if __name__ == '__main__':

@@ -1,9 +1,11 @@
 import zipfile
-from bvh import Bvh
 import os
 from plot_joints import scatter3d
 from bvh_helper import process_bvhfile
 import numpy as np
+import csv
+from tqdm import tqdm
+
 
 def get_children(joint):
     return [i for i in joint.filter('JOINT')]
@@ -41,6 +43,10 @@ def process_bvh(data):
 # Directory containing the .tar.bz2 files
 directory_path = './data'
 
+csvfile = open('mocap_data.csv','w')
+csvwriter = csv.writer(csvfile, delimiter=',')
+header_written = False
+
 # List all .tar.bz2 files in the directory
 bvh_files = [f for f in os.listdir(directory_path) if 'bvh' in f]
 
@@ -53,11 +59,24 @@ for bvh_filename in bvh_files:
             process_bvhfile(data)
     if zipfile.is_zipfile(path):
         zip = zipfile.ZipFile(path)
-        for name in zip.namelist():
+        for name in tqdm(zip.namelist()):
             if name.endswith('.bvh'):
                 with zip.open(name,'r') as f:
                     skeleton = process_bvhfile(f)
-                    coords = np.array(skeleton.get_frames_worldpos()[1])[:,1:].reshape((64,27,3))
-                    for i in range(coords.shape[0]):
-                        scatter3d(coords[0,:,0],coords[0,:,2],coords[0,:,1],range(27))
+                    header, coords = skeleton.get_frames_worldpos()
+                    rot_header, rot = skeleton.get_frames_rotations()
+                    if not header_written:
+                        header = np.concatenate((header,rot_header[1:]))
+                        csvwriter.writerow(header)
+                        header_written = True
+                    coords_and_rot = list(np.concatenate((coords,rot[1:])))
+                    csvwriter.writerows(coords_and_rot)
+                    # hand_idx = [i for i, label in enumerate(header) if 'Time' == label or 'Hand' in label]
+                    # header = np.array(header)[hand_idx]
+                    coords = np.array(coords)[:,1:].reshape((64,27,3))
+                    for coord in coords:
+                        scatter3d(coord[:,0],coord[:,2],coord[:,1],range(27))
+
+csvfile.close()
+
 
