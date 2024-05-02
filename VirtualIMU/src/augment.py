@@ -1,11 +1,13 @@
 import sys
+import os
 
-sys.path.append('/Users/igavier/Documents/GitHub/VirtualIMU/')
+sys.path.append('VirtualIMU/')
 
 import numpy as np
 import torch
 import pandas as pd
 from utils.signal_process import interp1dTorch, savGolFilterTorch, adaptiveMedFilterTorch
+import matplotlib.pyplot as plt
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -136,7 +138,7 @@ def augmentMonteCarlo(
         accelRightResampled = interp1dTorch(timeVec, accelRightFiltered, timeVecNew).transpose(0,1)
         gyroLeftResampled = interp1dTorch(timeVec, gyroLeftFiltered, timeVecNew).transpose(0,1)
         gyroRightResampled = interp1dTorch(timeVec, gyroRightFiltered, timeVecNew).transpose(0,1)
-        
+
         # Write to file
         dataFrame = pd.DataFrame(
             np.concatenate([
@@ -158,11 +160,20 @@ def augmentMonteCarlo(
     return
 
 if __name__ == '__main__':
-    for i in range(5):
+
+    directory_path = './data'
+    csvfiles = [f for f in os.listdir(directory_path) if f.endswith('.csv')]
+
+    for filename in csvfiles:
+        save_dir = f'data/VirtualIMU/{filename.split(".")[0]}/'
+        try:
+            os.mkdir(save_dir)
+        except:
+            pass
         augmentMonteCarlo(
             # File names
-            WristsCoordFileName = f'/Users/igavier/Documents/GitHub/VirtualIMU/data/captureOrigWristCoord{i+1}.csv',
-            VidIMUdirName = f'/Users/igavier/Documents/GitHub/VirtualIMU/data/augmentedVidIMU{i+1}/',
+            WristsCoordFileName = os.path.join(directory_path,filename),
+            VidIMUdirName = save_dir,
             # Temporal variables
             tStartUsr = 0.,
             tStopUsr = 5.,
