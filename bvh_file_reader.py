@@ -5,6 +5,7 @@ from bvh_helper import process_bvhfile
 import numpy as np
 import csv
 from tqdm import tqdm
+from VirtualIMU.utils.extract_coordinates import extractWristCoordinatesBVH
 
 
 def get_children(joint):
@@ -49,6 +50,7 @@ header_written = False
 
 # List all .tar.bz2 files in the directory
 bvh_files = [f for f in os.listdir(directory_path) if 'bvh' in f]
+csvfiles = [f.split('.')[0] for f in os.listdir(directory_path) if f.endswith('.csv')]
 
 for bvh_filename in bvh_files:
     print(f'Reading: {bvh_filename}')
@@ -60,55 +62,60 @@ for bvh_filename in bvh_files:
     if zipfile.is_zipfile(path):
         zip = zipfile.ZipFile(path)
         for name in tqdm(zip.namelist()):
-            if name.endswith('.bvh'):
-                with zip.open(name,'r') as f:
-                    skeleton = process_bvhfile(f)
-                    header, coords = skeleton.get_frames_worldpos()
-                    rot_header, rot = skeleton.get_frames_rotations()
+            if name.split('.')[0] in csvfiles:
+                print(f'{name.split(".")[0]} is already parsed')
+            else:
+                print(f'Parsing {name.split(".")[0]}')
+                if name.endswith('.bvh'):
+                    with zip.open(name,'r') as f:
+                        extractWristCoordinatesBVH(f,f'data/{name.split(".")[0]}.csv')
+                    # skeleton = process_bvhfile(f)
+                    # header, coords = skeleton.get_frames_worldpos()
+                    # rot_header, rot = skeleton.get_frames_rotations()
 
-                    # Rename joints 
-                    rot_header = [h.replace('Hand.','Wrist.') for h in rot_header]
-                    rot_header = [h.replace('ForeArm','Elbow') for h in rot_header]
-                    header = [h.replace('Hand.','Wrist.') for h in header]
-                    header = [h.replace('ForeArm','Elbow') for h in header]
+                    # # Rename joints 
+                    # rot_header = [h.replace('Hand.','Wrist.') for h in rot_header]
+                    # rot_header = [h.replace('ForeArm','Elbow') for h in rot_header]
+                    # header = [h.replace('Hand.','Wrist.') for h in header]
+                    # header = [h.replace('ForeArm','Elbow') for h in header]
 
-                    # Add rot or pos to name
-                    header = [h.replace('.','Pos.') for h in header]
-                    rot_header = [h.replace('.','Rot.') for h in rot_header]
+                    # # Add rot or pos to name
+                    # header = [h.replace('.','Pos.') for h in header]
+                    # rot_header = [h.replace('.','Rot.') for h in rot_header]
 
-                    # Find forearm pos
-                    elbow_idx = [i for i, h in enumerate(header) if 'Elbow' in h]
-                    elbow = np.array(coords)[:,elbow_idx]
-                    wrist_idx = [i for i, h in enumerate(header) if 'Wrist' in h]
-                    wrist = np.array(coords)[:,wrist_idx]
-                    forearm = (wrist + elbow)/2
-                    forearm_name = [h.replace('Elbow','ForeArm') for h in np.array(header)[elbow_idx]]
-                    header = np.concatenate((header,forearm_name))
-                    coords = np.hstack((coords,forearm))
+                    # # Find forearm pos
+                    # elbow_idx = [i for i, h in enumerate(header) if 'Elbow' in h]
+                    # elbow = np.array(coords)[:,elbow_idx]
+                    # wrist_idx = [i for i, h in enumerate(header) if 'Wrist' in h]
+                    # wrist = np.array(coords)[:,wrist_idx]
+                    # forearm = (wrist + elbow)/2
+                    # forearm_name = [h.replace('Elbow','ForeArm') for h in np.array(header)[elbow_idx]]
+                    # header = np.concatenate((header,forearm_name))
+                    # coords = np.hstack((coords,forearm))
 
-                    # Find knuckle pos
-                    hand_end_idx = [i for i, h in enumerate(header) if 'HandEnd' in h]
-                    hand_end = np.array(coords)[:,hand_end_idx]
-                    knuckle = (wrist + hand_end)/2
-                    knuckle_name = [h.replace('Elbow','Knuckle') for h in np.array(header)[elbow_idx]]
-                    header = np.concatenate((header,knuckle_name))
-                    coords = np.hstack((coords,knuckle))
+                    # # Find knuckle pos
+                    # hand_end_idx = [i for i, h in enumerate(header) if 'HandEnd' in h]
+                    # hand_end = np.array(coords)[:,hand_end_idx]
+                    # knuckle = (wrist + hand_end)/2
+                    # knuckle_name = [h.replace('Elbow','Knuckle') for h in np.array(header)[elbow_idx]]
+                    # header = np.concatenate((header,knuckle_name))
+                    # coords = np.hstack((coords,knuckle))
 
                     
-                    # Write header
-                    if not header_written:
-                        header_combo = np.concatenate((header,rot_header[1:]))
-                        csvwriter.writerow(header)
-                        header_written = True
+                    # # Write header
+                    # if not header_written:
+                    #     header_combo = np.concatenate((header,rot_header[1:]))
+                    #     csvwriter.writerow(header)
+                    #     header_written = True
 
-                    # coords_and_rot = list(np.hstack((coords,rot[1:])))
-                    csvwriter.writerows(coords)
-                    # hand_idx = [i for i, label in enumerate(header) if 'Time' == label or 'Hand' in label]
-                    # header = np.array(header)[hand_idx]
+                    # # coords_and_rot = list(np.hstack((coords,rot[1:])))
+                    # csvwriter.writerows(coords)
+                    # # hand_idx = [i for i, label in enumerate(header) if 'Time' == label or 'Hand' in label]
+                    # # header = np.array(header)[hand_idx]
 
-                    # coords = np.array(coords)[:,1:].reshape((64,31,3))
-                    # for coord in coords:
-                    #     scatter3d(coord[:,0],coord[:,2],coord[:,1],range(31),labels=header[1::3])
+                    # # coords = np.array(coords)[:,1:].reshape((64,31,3))
+                    # # for coord in coords:
+                    # #     scatter3d(coord[:,0],coord[:,2],coord[:,1],range(31),labels=header[1::3])
 
 csvfile.close()
 

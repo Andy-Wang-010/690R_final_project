@@ -1,6 +1,9 @@
 import csv
 import cv2
-import mediapipe as mp
+try:
+    import mediapipe as mp
+except:
+    pass
 import numpy as np
 import pandas as pd
 
@@ -164,9 +167,12 @@ def extractWristCoordinatesBVH(
     import transforms3d as t3d
 
     # Open the BVH file
-    with open(BVHFile) as f:
-        BVHTree = bvh.BvhTree(f.read())
-    
+    if isinstance(BVHFile, str):
+        with open(BVHFile) as f:
+            BVHTree = bvh.BvhTree(f.read())
+    else:
+        BVHTree = bvh.BvhTree(BVHFile.read().decode('ASCII'))
+
     # Compute Forward Kinematics
     root = next(BVHTree.root.filter('ROOT'))
     def get_world_positions(joint):
@@ -197,10 +203,10 @@ def extractWristCoordinatesBVH(
     timeVec = np.arange(BVHTree.nframes, dtype=float)[:,None] / sampleRate
     
     # Get transforms
-    leftWristPosition = BVHTree.search('End', 'LeftForeArm_End')[0].world_transforms[:,:3,3] / 100
-    rightWristPosition = BVHTree.search('End', 'RightForeArm_End')[0].world_transforms[:,:3,3] / 100
-    leftWristRotation = BVHTree.search('End', 'LeftForeArm_End')[0].world_transforms[:,:3,:3].reshape(-1,9)
-    rightWristRotation = BVHTree.search('End', 'RightForeArm_End')[0].world_transforms[:,:3,:3].reshape(-1,9)
+    leftWristPosition = BVHTree.search('JOINT', 'LeftHand')[0].world_transforms[:,:3,3] / 100
+    rightWristPosition = BVHTree.search('JOINT', 'RightHand')[0].world_transforms[:,:3,3] / 100
+    leftWristRotation = BVHTree.search('JOINT', 'LeftHand')[0].world_transforms[:,:3,:3].reshape(-1,9)
+    rightWristRotation = BVHTree.search('JOINT', 'RightHand')[0].world_transforms[:,:3,:3].reshape(-1,9)
     
     # Write the data to the CSV file
     data = pd.DataFrame(
