@@ -3,7 +3,7 @@ import numpy as np
 from plot_joints import scatter3d
 import os
 
-directory_path = './data'
+directory_path = './data/coords'
 csvfiles = [f for f in os.listdir(directory_path) if f.endswith('.csv')]
 for filename in csvfiles:
     wrists = np.genfromtxt(os.path.join(directory_path,filename), skip_header=1, delimiter=',')
