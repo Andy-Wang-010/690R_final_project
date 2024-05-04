@@ -34,7 +34,7 @@ def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     scatter = ax.scatter(x, y, z, c=scalarMap.to_rgba(cs))
-    
+
     max_range = np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() / 2.0
     mid_x = (x.max()+x.min()) * 0.5
     mid_y = (y.max()+y.min()) * 0.5
@@ -49,10 +49,10 @@ def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     
     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
     fig.colorbar(scalarMap, cax=cbar_ax, shrink=0.5, aspect=5)
-    fig.savefig(f'scatter{idx}.png')
+    # fig.savefig(f'scatter{idx}.png')
     idx += 1
-    
-    plt.show()
+    return fig, scatter
+
 if __name__ == '__main__':
     
     data = np.load('./amass-master/support_data/github_data/amass_sample.npz', allow_pickle=True)
