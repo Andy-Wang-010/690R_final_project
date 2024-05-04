@@ -8,6 +8,7 @@ import torch
 import pandas as pd
 from utils.signal_process import interp1dTorch, savGolFilterTorch, adaptiveMedFilterTorch
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -161,10 +162,10 @@ def augmentMonteCarlo(
 
 if __name__ == '__main__':
 
-    directory_path = './data'
+    directory_path = './data/WristCoords'
     csvfiles = [f for f in os.listdir(directory_path) if f.endswith('.csv')]
 
-    for filename in csvfiles:
+    for filename in tqdm(csvfiles):
         save_dir = f'data/VirtualIMU/{filename.split(".")[0]}/'
         try:
             os.mkdir(save_dir)
@@ -197,5 +198,5 @@ if __name__ == '__main__':
             # Total number of generations
             totalAug = 1,
             # Others
-            verbose = True
+            verbose = False
         )

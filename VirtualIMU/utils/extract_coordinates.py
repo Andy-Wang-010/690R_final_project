@@ -167,11 +167,7 @@ def extractWristCoordinatesBVH(
     import transforms3d as t3d
 
     # Open the BVH file
-    if isinstance(BVHFile, str):
-        with open(BVHFile) as f:
-            BVHTree = bvh.BvhTree(f.read())
-    else:
-        BVHTree = bvh.BvhTree(BVHFile.read().decode('ASCII'))
+    BVHTree = bvh.BvhTree(BVHFile)
 
     # Compute Forward Kinematics
     root = next(BVHTree.root.filter('ROOT'))
@@ -203,10 +199,17 @@ def extractWristCoordinatesBVH(
     timeVec = np.arange(BVHTree.nframes, dtype=float)[:,None] / sampleRate
     
     # Get transforms
+    spinePos = BVHTree.search('JOINT', 'Spine1')[0].world_transforms[:,:3,3] / 100
     leftWristPosition = BVHTree.search('JOINT', 'LeftHand')[0].world_transforms[:,:3,3] / 100
     rightWristPosition = BVHTree.search('JOINT', 'RightHand')[0].world_transforms[:,:3,3] / 100
+    leftWristPosition -= spinePos
+    rightWristPosition -= spinePos
+
+    spineRot = BVHTree.search('JOINT', 'Spine1')[0].world_transforms[:,:3,:3].reshape(-1,9)
     leftWristRotation = BVHTree.search('JOINT', 'LeftHand')[0].world_transforms[:,:3,:3].reshape(-1,9)
     rightWristRotation = BVHTree.search('JOINT', 'RightHand')[0].world_transforms[:,:3,:3].reshape(-1,9)
+    leftWristRotation -= spineRot
+    rightWristRotation -= spineRot
     
     # Write the data to the CSV file
     data = pd.DataFrame(
@@ -231,7 +234,103 @@ def extractWristCoordinatesBVH(
 
     data.to_csv(coordinatesFile, index=False)
     
+def extractAllCoordinatesBVH(
+        BVHFile = 'data/capture.bvh',
+        coordinatesFile = 'data/wristCoord.csv'
+):
+    import bvhtoolbox as bvh
+    import transforms3d as t3d
 
+    BVHTree = bvh.BvhTree(BVHFile)
+
+    # Compute Forward Kinematics
+    root = next(BVHTree.root.filter('ROOT'))
+    def get_world_positions(joint):
+        if joint.value[0] == 'End':
+            joint.world_transforms = np.tile(t3d.affines.compose(np.zeros(3), np.eye(3), np.ones(3)), (BVHTree.nframes, 1, 1))
+        else:
+            channels = BVHTree.joint_channels(joint.name)
+            axes_order = ''.join([ch[:1] for ch in channels if ch[1:] == 'rotation']).lower()  # FixMe: This isn't going to work when not all rotation channels are present
+            axes_order = 's' + axes_order[::-1]
+            joint.world_transforms = bvh.get_affines(BVHTree, joint.name, axes=axes_order)
+            
+        if joint != root:
+            # For joints substitute position for offsets.
+            offset = [float(o) for o in joint['OFFSET']]
+            joint.world_transforms[:, :3, 3] = offset
+            joint.world_transforms = np.matmul(joint.parent.world_transforms, joint.world_transforms)
+        
+        end = list(joint.filter('End'))
+        if end:
+            get_world_positions(end[0])  # There can be only one End Site per joint.
+        for child in joint.filter('JOINT'):
+            get_world_positions(child)
+    
+    get_world_positions(root)
+    
+    # Get time vector
+    sampleRate = int(1 / BVHTree.frame_time)
+    timeVec = np.arange(BVHTree.nframes, dtype=float)[:,None] / sampleRate
+    
+    # Get transforms
+    spinePos = BVHTree.search('JOINT', 'Spine1')[0].world_transforms[:,:3,3] / 100
+
+    leftShoulderPos = BVHTree.search('JOINT', 'LeftShoulder')[0].world_transforms[:,:3,3] / 100
+    rightShoulderPos = BVHTree.search('JOINT', 'RightShoulder')[0].world_transforms[:,:3,3] / 100
+
+    leftElbowPos = BVHTree.search('JOINT', 'LeftForeArm')[0].world_transforms[:,:3,3] / 100
+    rightElbowPos = BVHTree.search('JOINT', 'RightForeArm')[0].world_transforms[:,:3,3] / 100
+    
+    leftWristPosition = BVHTree.search('JOINT', 'LeftHand')[0].world_transforms[:,:3,3] / 100
+    rightWristPosition = BVHTree.search('JOINT', 'RightHand')[0].world_transforms[:,:3,3] / 100
+    
+    leftShoulderPos -= spinePos
+    rightShoulderPos -= spinePos
+    leftElbowPos -= spinePos
+    rightElbowPos -= spinePos
+    leftWristPosition -= spinePos
+    rightWristPosition -= spinePos
+
+    spineRot = BVHTree.search('JOINT', 'Spine1')[0].world_transforms[:,:3,:3].reshape(-1,9)
+    leftWristRotation = BVHTree.search('JOINT', 'LeftHand')[0].world_transforms[:,:3,:3].reshape(-1,9)
+    rightWristRotation = BVHTree.search('JOINT', 'RightHand')[0].world_transforms[:,:3,:3].reshape(-1,9)
+    leftWristRotation -= spineRot
+    rightWristRotation -= spineRot
+    
+    # Write the data to the CSV file
+    data = pd.DataFrame(
+        np.concatenate([
+            timeVec,
+            leftShoulderPos,
+            rightShoulderPos,
+            leftElbowPos,
+            rightElbowPos,
+            leftWristPosition,
+            rightWristPosition
+        ], axis=1),
+        columns = [
+            'frame',
+            'leftShoulderPos.X',
+            'leftShoulderPos.Y',
+            'leftShoulderPos.Z',
+            'rightShoulderPos.X',
+            'rightShoulderPos.Y',
+            'rightShoulderPos.Z',
+            'leftElbowPos.X',
+            'leftElbowPos.Y',
+            'leftElbowPos.Z',
+            'rightElbowPos.X',
+            'rightElbowPos.Y',
+            'rightElbowPos.Z',
+            'leftWristPosition.X',
+            'leftWristPosition.Y',
+            'leftWristPosition.Z',
+            'rightWristPosition.X',
+            'rightWristPosition.Y',
+            'rightWristPosition.Z'
+        ])
+
+    data.to_csv(coordinatesFile, index=False)
 
 if __name__ == '__main__':
     for i in range(5):
