@@ -25,6 +25,12 @@ class VirtualIMU_Loader():
                 windows = []
                 mocap_windows = []
                 while end < data.shape[0]:
+                    max_acc = np.round(np.max(np.abs(data[start:end,1:7]),axis=0),2)
+                    max_gyro = np.round(np.max(np.abs(data[start:end,7:]),axis=0),2)
+                    # if np.any(max_acc > 250) or np.any(max_gyro > 360):
+                    #      print(max_acc)
+                    #      print(max_gyro)
+
                     windows.append(np.transpose(data[start:end,1:]))
                     start_time = data[start,0]
                     diff = np.abs(mocap[:,1]-start_time)

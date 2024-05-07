@@ -48,8 +48,8 @@ if __name__ == '__main__':
 
     window_size = 100
     overlap = 0.5
-    kernel_sizes = [3,3]
-    channels = [12,64,32]
+    kernel_sizes = [1,1,1]
+    channels = [12,64,64,64]
     num_epochs = 1e4
     weight_decay = 0.01
     holdout = 0.2
