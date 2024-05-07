@@ -33,10 +33,10 @@ class VirtualIMU_Loader():
 
                     windows.append(np.transpose(data[start:end,1:]))
                     start_time = data[start,0]
-                    diff = np.abs(mocap[:,1]-start_time)
+                    diff = np.abs(mocap[:,0]-start_time)
                     mocap_start = mocap[np.argmin(diff),1:]
                     end_time = data[end,0]
-                    diff = np.abs(mocap[:,1]-end_time)
+                    diff = np.abs(mocap[:,0]-end_time)
                     mocap_end = mocap[np.argmin(diff),1:]
                     mocap_windows.append(np.transpose((mocap_start,mocap_end)))
                     start += int(window_size * overlap)

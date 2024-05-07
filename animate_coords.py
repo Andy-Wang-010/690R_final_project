@@ -36,14 +36,17 @@ while end < data.shape[0]:
 
     windows.append(np.transpose(data[start:end,1:]))
     start_time = data[start,0]
-    diff = np.abs(mocap[:,1]-start_time)
+    diff = np.abs(mocap[:,0]-start_time)
     mocap_start = mocap[np.argmin(diff),1:]
+    print([np.argmin(diff),0])
     end_time = data[end,0]
-    diff = np.abs(mocap[:,1]-end_time)
+    diff = np.abs(mocap[:,0]-end_time)
     mocap_end = mocap[np.argmin(diff),1:]
+    print([np.argmin(diff),0])
     mocap_windows.append(np.transpose((mocap_start,mocap_end)))
     start += int(window_size * overlap)
     end += int(window_size * overlap)
+    # print(data[start:end][1::3])
 
 mocap_windows = np.array(mocap_windows)
 fig, scatter = scatter3d(mocap_windows[0,0::3,1],mocap_windows[0,2::3,1],mocap_windows[0,1::3,1],np.ones(6))
@@ -51,5 +54,6 @@ fig, scatter = scatter3d(mocap_windows[0,0::3,1],mocap_windows[0,2::3,1],mocap_w
 def update(idx, data, scatter):
     scatter._offsets3d = (data[idx,0::3,0],data[idx,2::3,0],data[idx,1::3,0])
 
-ani = anim.FuncAnimation(fig, update, len(mocap_windows), fargs=(mocap_windows,scatter)).save('ani.gif','ffmpeg',1)
+ani = anim.FuncAnimation(fig, update, len(mocap_windows), fargs=(mocap_windows,scatter))
+ani.save('ani.gif','ffmpeg',5)
 plt.show()
