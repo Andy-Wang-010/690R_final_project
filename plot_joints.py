@@ -25,7 +25,7 @@ def skeleton_plot(markerData):
     
     plt.show()
 
-def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
+def scatter3d(x, y, z, cs, colorsMap='jet', labels=None, buffer=0):
     global idx
     cm = plt.get_cmap(colorsMap)
     cNorm = mcolors.Normalize(vmin=min(cs), vmax=max(cs))
@@ -34,8 +34,14 @@ def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     scatter = ax.scatter(x, y, z, c=scalarMap.to_rgba(cs))
+    plots = []
+    plots.append(ax.plot([x[0],x[1]],[y[0],y[1]],[z[0],z[1]], c=scalarMap.to_rgba(0)))
+    plots.append(ax.plot([x[0],x[2]],[y[0],y[2]],[z[0],z[2]], c=scalarMap.to_rgba(0)))
+    plots.append(ax.plot([x[1],x[3]],[y[1],y[3]],[z[1],z[3]], c=scalarMap.to_rgba(0)))
+    plots.append(ax.plot([x[2],x[4]],[y[2],y[4]],[z[2],z[4]], c=scalarMap.to_rgba(0)))
+    plots.append(ax.plot([x[3],x[5]],[y[3],y[5]],[z[3],z[5]], c=scalarMap.to_rgba(0)))
 
-    max_range = np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() / 2.0
+    max_range = (np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() / 2.0) + buffer
     mid_x = (x.max()+x.min()) * 0.5
     mid_y = (y.max()+y.min()) * 0.5
     mid_z = (z.max()+z.min()) * 0.5
@@ -51,7 +57,7 @@ def scatter3d(x, y, z, cs, colorsMap='jet', labels=None):
     fig.colorbar(scalarMap, cax=cbar_ax, shrink=0.5, aspect=5)
     # fig.savefig(f'scatter{idx}.png')
     idx += 1
-    return fig, scatter
+    return fig, scatter, plots
 
 if __name__ == '__main__':
     
