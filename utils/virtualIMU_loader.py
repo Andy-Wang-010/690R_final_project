@@ -19,25 +19,32 @@ class VirtualIMU_Loader():
         dataset = []
         mocap_dataset = []
         for data, mocap in self.load_files():
-            data = data[:,1:]
-            mocap = mocap[:,1:]
             if window_size and overlap:
                 start = 1
                 end = start + window_size
                 windows = []
                 mocap_windows = []
                 while end < data.shape[0]:
-                    # if np.max(np.abs(data[start:end])) > 10:
-                    #     print(f'Large Accel Datected: {name}: {np.max(data[start:end])}')
-                    #     start += int(window_size * overlap)
-                    #     end += int(window_size * overlap)
-                    #     continue
-                    windows.append(np.transpose(data[start:end]))
+                    max_acc = np.round(np.max(np.abs(data[start:end,1:7]),axis=0),2)
+                    max_gyro = np.round(np.max(np.abs(data[start:end,7:]),axis=0),2)
+                    # if np.any(max_acc > 250) or np.any(max_gyro > 360):
+                    #      print(max_acc)
+                    #      print(max_gyro)
+
+                    windows.append(np.transpose(data[start:end,1:]))
+                    start_time = data[start,0]
+                    diff = np.abs(mocap[:,0]-start_time)
+                    mocap_start = mocap[np.argmin(diff),1:]
+                    end_time = data[end,0]
+                    diff = np.abs(mocap[:,0]-end_time)
+                    mocap_end = mocap[np.argmin(diff),1:]
+                    mocap_windows.append(np.transpose((mocap_start,mocap_end)))
                     start += int(window_size * overlap)
                     end += int(window_size * overlap)
+                
                 if len(windows) > 0:
                     dataset.append(windows)
-                    mocap_dataset.append(mocap)
+                    mocap_dataset.append(mocap_windows)
             else:
                 dataset.append([np.transpose(data)])
         if not window_size or not overlap:
