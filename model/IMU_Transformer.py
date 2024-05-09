@@ -72,9 +72,13 @@ class IMU_Transformer(nn.Module):
         x = self.dropout(x)
         x = self.relu(x)
         x = self.lin4(x)
-        
-        leftShoulder = start[:,:3]
-        rightShoulder = start[:,3:6]
+
+        neck = torch.zeros_like(start[:,:3])
+        leftShoulderLen = torch.sqrt(torch.sum((neck - start[:,:3])**2,axis=1))
+        leftShoulder = F.normalize(x[:,:3] + start[:,:3]) * leftShoulderLen.repeat(3,1).transpose(0,1)
+
+        rightShoulderLen = torch.sqrt(torch.sum((neck - start[:,3:6])**2,axis=1))
+        rightShoulder = F.normalize(x[:,3:6] + start[:,3:6]) * rightShoulderLen.repeat(3,1).transpose(0,1)
 
         leftElbowLen = torch.sqrt(torch.sum((start[:,:3] - start[:,6:9])**2,axis=1))
         leftElbow = leftShoulder + F.normalize(x[:,6:9] + start[:,6:9]) * leftElbowLen.repeat(3,1).transpose(0,1)
@@ -134,7 +138,6 @@ y_test = mocap_data[:int(holdout*data.shape[0])]
 if __name__ == '__main__':
     torch.cuda.empty_cache()
     epochs = tqdm(range(int(num_epochs)))
-    # with torch.autograd.detect_anomaly():
     best_test = np.infty
     best_model = None
     for i in epochs:
