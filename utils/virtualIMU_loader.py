@@ -10,7 +10,10 @@ class VirtualIMU_Loader():
 
     def load_files(self):
         for folder in os.listdir(imu_directory_path):
+            # Get mocap ground truth data
             mocap_data = np.genfromtxt(os.path.join(full_dir_path,f'{folder}.csv'), skip_header=1, delimiter=',')
+
+            # Mocap will match multiple to same virtualIMU if multiple
             for file in os.listdir(os.path.join(imu_directory_path,folder)):
                     imu_data = np.genfromtxt(os.path.join(imu_directory_path,folder,file), skip_header=1, delimiter=',')
                     yield imu_data, mocap_data
@@ -31,20 +34,30 @@ class VirtualIMU_Loader():
                     #      print(max_acc)
                     #      print(max_gyro)
 
+                    # Make window of IMU
                     windows.append(np.transpose(data[start:end,1:]))
+
+                    # Match start and end times to ground truth
                     start_time = data[start,0]
                     diff = np.abs(mocap[:,0]-start_time)
                     mocap_start = mocap[np.argmin(diff),1:]
                     end_time = data[end,0]
                     diff = np.abs(mocap[:,0]-end_time)
                     mocap_end = mocap[np.argmin(diff),1:]
+
+                    # Add ground truth
                     mocap_windows.append(np.transpose((mocap_start,mocap_end)))
+
                     start += int(window_size * overlap)
                     end += int(window_size * overlap)
                 
+                # Useful if filtering to avoid empty arrays, not currently needed
                 if len(windows) > 0:
                     dataset.append(windows)
                     mocap_dataset.append(mocap_windows)
+            
+            # If None, can return a window of full size of data
+            # Does not work with batch (Mismatched sizes)
             else:
                 dataset.append([np.transpose(data)])
         if not window_size or not overlap:
