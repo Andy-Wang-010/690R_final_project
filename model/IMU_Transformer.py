@@ -117,24 +117,24 @@ weight_decay = 0.01
 holdout = 0.2
 batch_size = 128
 tokens = 64
-learning_rate = 1e-4
+learning_rate = 1e-3
 
 dtype = torch.float32
 
 encoder = IMU_Encoder(window_size,kernel_sizes,channels)
 transformer = IMU_Transformer(tokens).to(device,dtype=dtype)
 optim = torch.optim.Adam(transformer.parameters(),weight_decay=weight_decay, lr=learning_rate)
-loss_criterion = torch.nn.MSELoss()
+loss_criterion = torch.nn.L1Loss()
 
 vIMU_loader = VirtualIMU_Loader()
 dataset, mocap_dataset = vIMU_loader.extract_dataset(window_size,overlap)
     
 data = torch.tensor(dataset,device=device,dtype=dtype)
 mocap_data = torch.tensor(mocap_dataset,device=device,dtype=dtype)
-X_train = data[int(holdout*data.shape[0]):]
-X_test = data[:int(holdout*data.shape[0])]
-y_train = mocap_data[int(holdout*data.shape[0]):]
-y_test = mocap_data[:int(holdout*data.shape[0])]
+X_train = data[:int(holdout*data.shape[0])]
+X_test = data[int(holdout*data.shape[0]):]
+y_train = mocap_data[:int(holdout*data.shape[0])]
+y_test = mocap_data[int(holdout*data.shape[0]):]
 
 if __name__ == '__main__':
     torch.cuda.empty_cache()
@@ -151,7 +151,7 @@ if __name__ == '__main__':
             # y_pred += torch.rand_like(y_pred)*0.0001
             delta = torch.abs(y[:,12:,1] - y_pred[:,12:])
             delta_penalty = F.relu(delta - (0.2))
-            loss = loss_criterion(y[:,:,1],y_pred) + delta_penalty.mean()
+            loss = loss_criterion(y[:,:,1],y_pred)# + delta_penalty.mean()
             loss.backward()
             optim.step()
 
