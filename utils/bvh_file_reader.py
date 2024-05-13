@@ -26,6 +26,7 @@ for bvh_filename in bvh_files:
 
     if bvh_filename.endswith('.bvh'):
         with open(path,'r') as f:
+            data = f.read().decode('ASCII')
             extractWristCoordinatesBVH(f,f'data/WristCoords/{bvh_filename.split(".")[0]}.csv')
 
     if zipfile.is_zipfile(path):
