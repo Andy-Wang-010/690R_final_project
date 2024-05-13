@@ -52,14 +52,21 @@ class IMU_Transformer(nn.Module):
         self.lin4 = nn.Linear(tokens,18)
 
     def forward(self, x, start):
+
+        # Pass through pretrained encoder
         with torch.no_grad():
             x = self.encoder(x)
             x = self.relu(x)
         x = x.permute(2,0,1)
-        cls_token = self.cls_token.unsqueeze(1).repeat(1,x.shape[1],1)
+
+        # Concatenate Start position to transformer input, (zero padded to align dimensions)
         x = torch.cat([F.pad(start,(0,tokens-18),'constant',0).unsqueeze(0), x])
         x += self.pos_enc(x)
+
+        #  Apply transformer, and extract important idx
         x = self.transformer(x)[0][:,:18]
+
+        # Linear Layers
         x = self.dropout(x)
         x = self.relu(x)
         x = self.lin1(x)
@@ -73,8 +80,10 @@ class IMU_Transformer(nn.Module):
         x = self.relu(x)
         x = self.lin4(x)
 
+        # Neck is at origin
         neck = torch.zeros_like(start[:,:3])
         
+        # Get limb length and enforce it
         leftShoulderLen = torch.sqrt(torch.sum((neck - start[:,:3])**2,axis=1))
         leftShoulder = F.normalize(x[:,:3] + start[:,:3]) * leftShoulderLen.repeat(3,1).transpose(0,1)
 
@@ -93,6 +102,7 @@ class IMU_Transformer(nn.Module):
         rightWristLen = torch.sqrt(torch.sum((start[:,9:12] - start[:,15:18])**2,axis=1))
         rightWrist = rightElbow + F.normalize(x[:,15:18] + start[:,15:18]) * rightWristLen.repeat(3,1).transpose(0,1)
 
+        # Return final output
         x = torch.cat((
             leftShoulder,
             rightShoulder,
@@ -144,11 +154,11 @@ if __name__ == '__main__':
     for i in epochs:
         for i in range(int(X_train.shape[0]/batch_size)):
             X = X_train[i*batch_size:(i+1)*batch_size]
+            # y[:,:,0] is starting position y[:,:,1] is ground truth end position
             y = y_train[i*batch_size:(i+1)*batch_size]
             optim.zero_grad()
             transformer.train()
             y_pred = transformer(X,y[:,:,0])
-            # y_pred += torch.rand_like(y_pred)*0.0001
             delta = torch.abs(y[:,12:,1] - y_pred[:,12:])
             delta_penalty = F.relu(delta - (0.2))
             loss = loss_criterion(y[:,:,1],y_pred)# + delta_penalty.mean()
