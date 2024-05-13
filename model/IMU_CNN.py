@@ -24,7 +24,6 @@ class IMU_CNN(nn.Module):
         self.conv2 = nn.Conv1d(128,128,3)
         self.conv3 = nn.Conv1d(128,128,3)
         self.conv4 = nn.Conv1d(128,128,3)
-        self.conv4 = nn.Conv1d(128,128,3)
         size = 15
         self.lin1 = nn.Linear(size*128,512)
         self.lin2 = nn.Linear(512,18)
@@ -54,8 +53,10 @@ class IMU_CNN(nn.Module):
         x = self.drop(x)
         x = self.relu(x)
         x = self.lin2(x)
-        leftShoulder = x[:,:3]
-        rightShoulder = x[:,3:6]
+        x += start
+        
+        leftShoulder = start[:,:3]
+        rightShoulder = start[:,3:6]
 
         leftElbowLen = torch.sqrt(torch.sum((start[:,:3] - start[:,6:9])**2,axis=1))
         leftElbow = leftShoulder + F.normalize(x[:,6:9]) * leftElbowLen.repeat(3,1).transpose(0,1)

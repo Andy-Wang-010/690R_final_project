@@ -2,6 +2,11 @@ import tarfile
 import numpy as np
 import os
 
+################################
+# THIS FILE IS NO LONGER USED
+# USE utils/bvh_file_reader.py
+################################
+
 # Directory containing the .tar.bz2 files
 directory_path = './data'
 

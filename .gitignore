@@ -1,2 +1,6 @@
 data/*
 *.py[cod]
+.vscode/
+
+model/*weights
+model/best*

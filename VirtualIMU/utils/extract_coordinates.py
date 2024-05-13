@@ -278,6 +278,10 @@ def extractAllCoordinatesBVH(
     leftShoulderPos = BVHTree.search('JOINT', 'LeftShoulder')[0].world_transforms[:,:3,3] / 100
     rightShoulderPos = BVHTree.search('JOINT', 'RightShoulder')[0].world_transforms[:,:3,3] / 100
 
+
+    # Maybe centering at midpoint is better than spine
+    spinePos = (leftShoulderPos + rightShoulderPos)/2
+
     leftElbowPos = BVHTree.search('JOINT', 'LeftForeArm')[0].world_transforms[:,:3,3] / 100
     rightElbowPos = BVHTree.search('JOINT', 'RightForeArm')[0].world_transforms[:,:3,3] / 100
     
