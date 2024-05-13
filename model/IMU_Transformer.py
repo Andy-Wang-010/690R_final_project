@@ -74,6 +74,7 @@ class IMU_Transformer(nn.Module):
         x = self.lin4(x)
 
         neck = torch.zeros_like(start[:,:3])
+        
         leftShoulderLen = torch.sqrt(torch.sum((neck - start[:,:3])**2,axis=1))
         leftShoulder = F.normalize(x[:,:3] + start[:,:3]) * leftShoulderLen.repeat(3,1).transpose(0,1)
 
@@ -148,7 +149,8 @@ if __name__ == '__main__':
             transformer.train()
             y_pred = transformer(X,y[:,:,0])
             # y_pred += torch.rand_like(y_pred)*0.0001
-            delta_penalty = F.relu(torch.abs(y[:,12:,1] - y_pred[:,12:]) - (0.2))
+            delta = torch.abs(y[:,12:,1] - y_pred[:,12:])
+            delta_penalty = F.relu(delta - (0.2))
             loss = loss_criterion(y[:,:,1],y_pred) + delta_penalty.mean()
             loss.backward()
             optim.step()
