@@ -2,5 +2,5 @@ data/*
 *.py[cod]
 .vscode/
 
-model/
-!model/*.py
+model/*weights
+model/best*
